@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bank Summary Dashboard</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --primary: #2563eb;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #f59e0b;
+      --border: #e5e7eb;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: linear-gradient(135deg, #eef4ff, var(--bg));
+      color: var(--text);
+      padding: 24px;
+    }
+
+    .dashboard {
+      max-width: 1100px;
+      margin: 0 auto;
+      background: rgba(255,255,255,0.75);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.8);
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
+    }
+
+    h1 {
+      margin: 0 0 20px;
+      font-size: 28px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(220px, 1fr));
+      gap: 18px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+    }
+
+    .label {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .value {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .value.positive { color: var(--success); }
+    .value.negative { color: var(--danger); }
+    .value.neutral { color: var(--primary); }
+
+    .summary {
+      margin-top: 20px;
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 18px;
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .row:last-child { border-bottom: none; }
+
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: repeat(2, minmax(220px, 1fr)); }
+      .summary { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 600px) {
+      .grid { grid-template-columns: 1fr; }
+      body { padding: 12px; }
+      .dashboard { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <nav aria-label="Bank portals" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:0 auto 18px;max-width:1100px;">
+    <a href="/" style="padding:8px 12px;">Sign In</a>
+    <a href="/bank%20interface.html" style="padding:8px 12px;">Client Portal</a>
+    <a href="/bankside.html" style="padding:8px 12px;">Employee Dashboard</a>
+    <a href="/bank-storage.html" style="padding:8px 12px;">Bank Summary</a>
+  </nav>
+  <div class="dashboard">
+    <h1>Bank Summary Dashboard</h1>
+
+    <div class="grid">
+      <div class="card">
+        <div class="label">Customer Accounts</div>
+        <div class="value" id="accountCount">0</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Total Amount in Bank</div>
+        <div class="value neutral" id="totalBalance">$0</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Total Assets</div>
+        <div class="value neutral" id="totalAssets">$0</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Pending Loans</div>
+        <div class="value" id="pendingLoans">0</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Loans Given</div>
+        <div class="value" id="loansGiven">0</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Total Money In</div>
+        <div class="value positive" id="totalMoneyIn">$0</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Total Money Out</div>
+        <div class="value negative" id="totalMoneyOut">$0</div>
+      </div>
+    </div>
+
+    <div class="summary">
+      <div class="panel">
+        <h3>Money Flow</h3>
+        <div class="row"><span>Incoming</span><strong id="flowIncoming">$0</strong></div>
+        <div class="row"><span>Outgoing</span><strong id="flowOutgoing">$0</strong></div>
+        <div class="row"><span>Net Flow</span><strong class="positive" id="netFlow">$0</strong></div>
+      </div>
+
+      <div class="panel">
+        <h3>Ledger status</h3>
+        <div class="row"><span>Settled transactions</span><strong id="transactionCount">0</strong></div>
+        <div class="row"><span>Loan disbursements paused</span><strong id="agentPaused">No</strong></div>
+      </div>
+
+      <div class="panel">
+        <h3>📋 Loan Statistics</h3>
+        <div class="row"><span>Pending Applications</span><strong id="loanPending">0</strong></div>
+        <div class="row"><span>Approved Loans</span><strong id="loanApproved">0</strong></div>
+        <div class="row"><span>Rejected Loans</span><strong id="loanRejected">0</strong></div>
+        <div class="row"><span>Total Requested</span><strong id="totalLoanAmount">$0</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = '/api';
+    let refreshInterval;
+
+    function formatCurrency(value) {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+      }).format(value);
+    }
+
+    async function fetchBankData() {
+      try {
+        const response = await fetch(`${API_URL}/bank/summary`, { credentials: 'same-origin' });
+        if (!response.ok) {
+          if (response.status === 401 || response.status === 403) window.location.href = '/';
+          console.error('Failed to fetch bank data');
+          return;
+        }
+        
+        const data = await response.json();
+        updateDashboard(data);
+      } catch (error) {
+        console.error('Error fetching bank data:', error);
+      }
+    }
+
+    async function fetchLoanStats() {
+      try {
+        const response = await fetch(`${API_URL}/loans`, { credentials: 'same-origin' });
+        const loans = await response.json();
+        
+        const pending = loans.filter(l => ['reviewing', 'review_required', 'pending'].includes(l.status)).length;
+        const approved = loans.filter(l => ['approved', 'disbursed', 'repaid'].includes(l.status)).length;
+        const rejected = loans.filter(l => l.status === 'rejected').length;
+        const totalAmount = loans.reduce((sum, l) => sum + l.amount, 0);
+        
+        document.getElementById('loanPending').textContent = pending;
+        document.getElementById('loanApproved').textContent = approved;
+        document.getElementById('loanRejected').textContent = rejected;
+        document.getElementById('totalLoanAmount').textContent = formatCurrency(totalAmount);
+      } catch (error) {
+        console.error('Error fetching loan stats:', error);
+      }
+    }
+
+    function updateDashboard(data) {
+      document.getElementById('totalBalance').textContent = formatCurrency(data.totalBalance);
+      document.getElementById('totalAssets').textContent = formatCurrency(data.totalAssets);
+      document.getElementById('accountCount').textContent = data.accountCount;
+      document.getElementById('pendingLoans').textContent = data.pendingLoans;
+      document.getElementById('loansGiven').textContent = data.loansGiven;
+      document.getElementById('totalMoneyIn').textContent = formatCurrency(data.totalMoneyIn);
+      document.getElementById('totalMoneyOut').textContent = formatCurrency(data.totalMoneyOut);
+      
+      document.getElementById('flowIncoming').textContent = formatCurrency(data.totalMoneyIn);
+      document.getElementById('flowOutgoing').textContent = formatCurrency(data.totalMoneyOut);
+      
+      const netFlow = data.totalMoneyIn - data.totalMoneyOut;
+      document.getElementById('netFlow').textContent = formatCurrency(netFlow);
+      
+      document.getElementById('transactionCount').textContent = data.transactionCount;
+      document.getElementById('agentPaused').textContent = data.agentPaused ? 'Yes' : 'No';
+    }
+
+    // Fetch data on page load
+    window.addEventListener('load', () => {
+      fetchBankData();
+      fetchLoanStats();
+      // Refresh data every 5 seconds
+      refreshInterval = setInterval(() => {
+        fetchBankData();
+        fetchLoanStats();
+      }, 5000);
+    });
+
+    // Clean up interval on page unload
+    window.addEventListener('beforeunload', () => {
+      if (refreshInterval) clearInterval(refreshInterval);
+    });
+  </script>
+</body>
+</html>

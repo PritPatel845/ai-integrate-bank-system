@@ -1,0 +1,28 @@
+{
+  "name": "bank-system",
+  "version": "1.1.0",
+  "description": "Unified Bank Management System with Dashboard, Client, and Employee Interfaces",
+  "main": "bank-api.js",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "start": "node bank-api.js",
+    "start:lan": "HOST=0.0.0.0 node bank-api.js",
+    "dev": "node bank-api.js",
+    "check": "node --check bank-api.js && node --check merchant-agent.js && node --check money-utils.js",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "ag-grid-community": "^36.2.0",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.18.2",
+    "express-rate-limit": "^7.5.0",
+    "express-session": "^1.18.1",
+    "helmet": "^8.0.0",
+    "html5-qrcode": "^2.3.8",
+    "qrcode": "^1.5.4"
+  }
+}

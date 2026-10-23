@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: current-wallet
+    runtime: docker
+    plan: starter
+    healthCheckPath: /
+    disk:
+      name: current-wallet-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: DATABASE_PATH
+        value: /var/data/bank.sqlite
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: APP_ORIGIN
+        sync: false
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_CLIENT_SECRET
+        sync: false
+      - key: PAYPAL_WEBHOOK_ID
+        sync: false
+      - key: MONITOR_EMAIL
+        sync: false
+      - key: MONITOR_PASSWORD
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
