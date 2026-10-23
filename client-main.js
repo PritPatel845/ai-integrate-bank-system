@@ -5,12 +5,24 @@ const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
     });
-    if (!res.ok) throw await res.json();
+    if (!res.ok) {
+      let payload = null;
+      try {
+        payload = await res.json();
+      } catch (error) {}
+      throw payload || { error: 'Request failed' };
+    }
     return res.json();
   },
   async get(route) {
     const res = await fetch(route);
-    if (!res.ok) throw await res.json();
+    if (!res.ok) {
+      let payload = null;
+      try {
+        payload = await res.json();
+      } catch (error) {}
+      throw payload || { error: 'Request failed' };
+    }
     return res.json();
   }
 };
@@ -24,85 +36,95 @@ function escapeHtml(value) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('Sovereign Wallet Client Loaded');
-
-  // --- AUTHENTICATION HANDLERS ---
-  const loginForm = document.getElementById('signin-form'); // Fixed ID to match login.html
+  const loginForm = document.getElementById('signin-form');
   if (loginForm) {
-    loginForm.onsubmit = async (e) => {
+    loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
+      const email = document.getElementById('signinEmail')?.value || '';
+      const password = document.getElementById('signinPassword')?.value || '';
       try {
-        const data = { 
-          email: document.getElementById('signinEmail').value, 
-          password: document.getElementById('signinPassword').value 
-        };
-        const result = await api.request('/api/auth/login', data);
-        window.location.href = result.user.role === 'merchant' ? '/merchant.html' : '/bank-interface.html';
+        const result = await api.request('/api/auth/login', { email, password });
+        if (result.user && result.user.role === 'merchant') {
+          window.location.href = '/merchant.html';
+          return;
+        }
+        window.location.href = '/bank-interface.html';
       } catch (err) {
-        alert(err.error || 'Login failed');
+        alert(err && err.error ? err.error : 'Login failed');
       }
-    };
+    });
   }
 
   const signupForm = document.getElementById('signup-form');
   if (signupForm) {
-    signupForm.onsubmit = async (e) => {
+    signupForm.addEventListener('submit', async (e) => {
       e.preventDefault();
+      const payload = {
+        name: document.getElementById('signupName')?.value || '',
+        email: document.getElementById('signupEmail')?.value || '',
+        password: document.getElementById('signupPassword')?.value || '',
+        role: document.getElementById('signupRole')?.value || 'customer',
+        paypalEmail: document.getElementById('signupPaypalEmail')?.value || ''
+      };
       try {
-        const data = { 
-          name: document.getElementById('signupName').value, 
-          email: document.getElementById('signupEmail').value, 
-          password: document.getElementById('signupPassword').value, 
-          role: document.getElementById('signupRole').value,
-          paypalEmail: document.getElementById('signupPaypalEmail').value
-        };
-        const result = await api.request('/api/auth/signup', data);
-        window.location.href = result.user.role === 'merchant' ? '/merchant.html' : '/bank-interface.html';
+        const result = await api.request('/api/auth/signup', payload);
+        if (result.user && result.user.role === 'merchant') {
+          window.location.href = '/merchant.html';
+          return;
+        }
+        window.location.href = '/bank-interface.html';
       } catch (err) {
-        alert(err.error || 'Signup failed');
+        alert(err && err.error ? err.error : 'Signup failed');
       }
-    };
+    });
   }
 
-  // --- DASHBOARD HANDLERS ---
   const navButtons = document.querySelectorAll('.nav-btn');
   navButtons.forEach(btn => {
-    btn.onclick = () => {
+    btn.addEventListener('click', () => {
       const viewId = btn.getAttribute('data-view');
       document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
       document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-      document.getElementById(viewId).classList.add('active');
+      const target = document.getElementById(viewId);
+      if (target) target.classList.add('active');
       btn.classList.add('active');
-      
       if (viewId === 'activity') loadTransactions();
-    };
+    });
   });
 
   const signOutBtn = document.querySelector('.icon-btn[title="Sign out"]');
   if (signOutBtn) {
-    signOutBtn.onclick = async () => {
-      await api.request('/api/auth/logout');
+    signOutBtn.addEventListener('click', async () => {
+      try {
+        await api.request('/api/auth/logout', {});
+      } catch (error) {}
       window.location.href = '/login.html';
-    };
+    });
   }
 
-  // --- DATA LOADING ---
   async function loadDashboard() {
     try {
-      const user = await api.get('/api/auth/me');
+      const userResponse = await api.get('/api/auth/me');
       const accounts = await api.get('/api/accounts');
-      
-      document.getElementById('identity').textContent = `${user.user.name} · ${user.user.email}`;
-      document.getElementById('greeting').textContent = `Good day, ${user.user.name.split(' ')[0]}`;
-      
+      const user = userResponse.user;
+
+      const identityEl = document.getElementById('identity');
+      const greetingEl = document.getElementById('greeting');
+      if (identityEl) identityEl.textContent = `${user.name || user.email} · ${user.email}`;
+      if (greetingEl) greetingEl.textContent = `Good day, ${(user.name || user.email).split(' ')[0]}`;
+
       const account = accounts[0];
-      if (account) {
-        document.getElementById('balance').textContent = currency(account.balance);
+      const balanceEl = document.getElementById('balance');
+      if (account && balanceEl) {
+        balanceEl.textContent = currency(account.balance);
         const balanceData = await api.get(`/api/accounts/${account.accountId}/balance`);
-        // Update safe balance or insights if UI elements exist
+        const safeBalanceEl = document.getElementById('safe-balance');
+        if (safeBalanceEl) safeBalanceEl.textContent = currency(balanceData.safeBalance || 0);
       }
     } catch (err) {
-      if (err.error === 'Sign in required') window.location.href = '/login.html';
+      if (err && err.error === 'Sign in required') {
+        window.location.href = '/login.html';
+      }
     }
   }
 
@@ -110,26 +132,30 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const user = await api.get('/api/auth/me');
       const accounts = await api.get('/api/accounts');
+      if (!accounts.length) return;
       const txs = await api.get(`/api/accounts/${accounts[0].accountId}/transactions`);
-      
       const list = document.getElementById('all-transactions');
+      if (!list) return;
       if (!txs.length) {
         list.innerHTML = '<div class="empty">No transactions found.</div>';
         return;
       }
-      
-      list.innerHTML = txs.map(tx => `
-        <div class="tx">
-          <div class="tx-icon">${['paypal_deposit','transfer_in','merchant_sale'].includes(tx.type) ? '↓' : '↑'}</div>
-          <div>
-            <div class="tx-title">${escapeHtml(tx.reason || tx.type)}</div>
-            <div class="tx-meta">${new Date(tx.timestamp).toLocaleString()}</div>
+      list.innerHTML = txs.map(tx => {
+        const isPositive = ['paypal_deposit', 'transfer_in', 'merchant_sale'].includes(tx.type) || Number(tx.amount) >= 0;
+        const sign = isPositive ? '+' : '−';
+        return `
+          <div class="tx">
+            <div class="tx-icon">${isPositive ? '↓' : '↑'}</div>
+            <div>
+              <div class="tx-title">${escapeHtml(tx.reason || tx.type)}</div>
+              <div class="tx-meta">${new Date(tx.timestamp).toLocaleString()}</div>
+            </div>
+            <div class="tx-amount ${isPositive ? 'positive' : 'negative'}">
+              ${sign}${currency(tx.amount)}
+            </div>
           </div>
-          <div class="tx-amount ${['paypal_deposit','transfer_in','merchant_sale'].includes(tx.type) ? 'positive' : 'negative'}">
-            ${['paypal_deposit','transfer_in','merchant_sale'].includes(tx.type) ? '+' : '−'}${currency(tx.amount)}
-          </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     } catch (err) {
       console.error('Failed to load transactions', err);
     }
